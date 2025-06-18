@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111" />
+  <title>修仙秘笈組合器</title>
+  <link rel="icon" href="icon.png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "微軟正黑體", sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      color: #222;
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    .step {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .step select {
+      flex: 1;
+      padding: 8px;
+      margin-right: 5px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .step button {
+      background-color: #d00;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .step button:hover {
+      background-color: #a00;
+    }
+    #addStep {
+      margin-top: 10px;
+      background: #0078d7;
+      color: white;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      cursor: pointer;
+    }
+    #addStep:hover {
+      background: #005fa3;
+    }
+    #output {
+      background: #f7f7f7;
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 6px;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>修仙秘笈組合器</h2>
+    <div id="steps"></div>
+    <button id="addStep" onclick="addStep()">＋ 增加動作格</button>
+    <button id="generate" onclick="generate()" style="margin-top: 10px">生成秘笈</button>
+    <div id="output">請新增至少一格並選擇項目後生成。</div>
+  </div>
+  <script>
+    let resources = {};
+
+    async function loadResources() {
+      try {
+        const res = await fetch("data.json");
+        resources = await res.json();
+      } catch (e) {
+        document.getElementById('output').textContent = '載入資源失敗';
+      }
+    }
+
+    function fillSelect(select, items) {
+      if (!Array.isArray(items)) {
+        select.innerHTML = '<option disabled>無資料</option>';
+        return;
+      }
+      select.innerHTML = items.map(i => `<option value="${i}">${i}</option>`).join('');
+    }
+
+    function createStep(index) {
+      const div = document.createElement('div');
+      div.className = 'step';
+      div.innerHTML = `
+        <select class="weapon"></select>
+        <select class="action"></select>
+        <select class="tempo"></select>
+        <select class="element"></select>
+        <button onclick="removeStep(this)">✕</button>
+      `;
+      fillSelect(div.querySelector('.weapon'), resources.weapons);
+      fillSelect(div.querySelector('.action'), resources.styles);
+      fillSelect(div.querySelector('.tempo'), resources.tempos);
+      fillSelect(div.querySelector('.element'), resources.elements);
+      return div;
+    }
+
+    function addStep() {
+      const stepContainer = document.getElementById('steps');
+      const step = createStep(stepContainer.children.length);
+      stepContainer.appendChild(step);
+    }
+
+    function removeStep(btn) {
+      btn.parentElement.remove();
+    }
+
+    function generate() {
+      const stepDivs = document.querySelectorAll('.step');
+      if (stepDivs.length === 0) {
+        document.getElementById('output').textContent = '請至少新增一個動作格。';
+        return;
+      }
+
+      const steps = Array.from(stepDivs).map(div => ({
+        weapon: div.querySelector('.weapon').value,
+        style: div.querySelector('.action').value,
+        tempo: div.querySelector('.tempo').value,
+        element: div.querySelector('.element').value
+      }));
+
+      const output = steps.map((s, i) =>
+        `步驟 ${i + 1}: 使用 ${s.weapon} 施展 ${s.style}，節奏為 ${s.tempo}，蘊含 ${s.element} 屬性。`
+      ).join('\n');
+      document.getElementById('output').textContent = output;
+    }
+
+    loadResources();
+  </script>
+</body>
+</html>
